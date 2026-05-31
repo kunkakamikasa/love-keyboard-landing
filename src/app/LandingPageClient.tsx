@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  trackEvent,
+  readUtmFromLocation,
+  buildCtaUrl,
+  STRATEGY_ID,
+  LANDING_VARIANT_ID,
+  type AttributionContext,
+} from "@/lib/analytics";
 
 // ─── Config (swap these without touching page structure) ───────────────────
 // NOTE: visual_manifest_pending — App Store / product URL not yet confirmed
@@ -22,59 +30,12 @@ const CONFIG = {
   utmContent: "hero_cta",
 };
 
-// ─── Analytics ────────────────────────────────────────────────────────────
-function trackEvent(
-  event: string,
-  params: Record<string, string | number> = {}
-) {
-  try {
-    const payload = { event, ...params, ts: Date.now() };
-    type WindowWithGtag = typeof window & { gtag?: (...args: unknown[]) => void };
-    if (
-      typeof window !== "undefined" &&
-      typeof (window as WindowWithGtag).gtag === "function"
-    ) {
-      (window as WindowWithGtag).gtag!("event", event, params);
-    }
-    console.log("[analytics]", JSON.stringify(payload));
-  } catch {
-    // silent
-  }
-}
-
-// ─── UTM helpers ──────────────────────────────────────────────────────────
-function buildCtaUrl(
-  base: string,
-  overrides: Record<string, string>
-): string {
-  if (!base || base === "#") return "#";
-  try {
-    const url = new URL(base);
-    const utmKeys = [
-      "utm_source",
-      "utm_medium",
-      "utm_campaign",
-      "utm_content",
-    ];
-    utmKeys.forEach((k) => {
-      if (overrides[k]) url.searchParams.set(k, overrides[k]);
-    });
-    return url.toString();
-  } catch {
-    return base;
-  }
-}
-
-function getUtmFromPage(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const sp = new URLSearchParams(window.location.search);
-  return {
-    utm_source: sp.get("utm_source") || CONFIG.utmSource,
-    utm_medium: sp.get("utm_medium") || CONFIG.utmMedium,
-    utm_campaign: sp.get("utm_campaign") || CONFIG.utmCampaign,
-    utm_content: sp.get("utm_content") || CONFIG.utmContent,
-  };
-}
+const DEFAULT_UTM: AttributionContext = {
+  utm_source: CONFIG.utmSource,
+  utm_medium: CONFIG.utmMedium,
+  utm_campaign: CONFIG.utmCampaign,
+  utm_content: CONFIG.utmContent,
+};
 
 // ─── Demo data — chat screenshot → 3 reply tones ──────────────────────────
 type Tone = "playful" | "warm" | "confident";
@@ -176,18 +137,19 @@ export default function LandingPageClient({
   initialQuery,
 }: { initialQuery?: string } = {}) {
   const [activeDemo, setActiveDemo] = useState(0);
-  const utmParamsRef = useRef<Record<string, string>>({});
+  const utmParamsRef = useRef<AttributionContext>({});
   const [heroVisible, setHeroVisible] = useState(true);
   void initialQuery;
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Map<string, IntersectionObserver>>(new Map());
 
   useEffect(() => {
-    const utm = getUtmFromPage();
+    const utm = readUtmFromLocation(DEFAULT_UTM);
     utmParamsRef.current = utm;
     trackEvent("page_view", {
       ...utm,
       page: "love_keyboard_landing",
+      cta_module_id: "page",
     });
   }, []);
 
@@ -208,7 +170,11 @@ export default function LandingPageClient({
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          trackEvent("section_exposure", { section: sectionId });
+          trackEvent("section_exposure", {
+            section_id: sectionId,
+            cta_module_id: sectionId,
+            ...utmParamsRef.current,
+          });
           obs.disconnect();
           sectionRefs.current.delete(sectionId);
         }
@@ -235,10 +201,28 @@ export default function LandingPageClient({
     };
   }, [trackSection]);
 
-  function handleCta(label: string, utmContent: string) {
-    const utm = { ...utmParamsRef.current, utm_content: utmContent };
-    const url = buildCtaUrl(CONFIG.ctaUrl, utm);
-    trackEvent("cta_click", { label, ...utm });
+  function handleCta(label: string, ctaModuleId: string, placement: string) {
+    const utm: AttributionContext = {
+      ...utmParamsRef.current,
+      utm_content: ctaModuleId,
+      cta_module_id: ctaModuleId,
+    };
+    const url = buildCtaUrl(CONFIG.ctaUrl, {
+      ...utm,
+      strategy_id: STRATEGY_ID,
+      landing_variant_id: LANDING_VARIANT_ID,
+    });
+    const eventName = ctaModuleId === "hero_cta" ? "hero_cta_click" : "cta_click";
+    trackEvent(eventName, {
+      label,
+      placement,
+      ...utm,
+    });
+    trackEvent("product_entry_click", {
+      label,
+      placement,
+      ...utm,
+    });
     if (url !== "#") {
       window.open(url, "_blank", "noopener");
     }
@@ -278,7 +262,7 @@ export default function LandingPageClient({
               </div>
               <button
                 className="btn btn-primary btn-hero"
-                onClick={() => handleCta(CONFIG.ctaPrimary, "hero_cta")}
+                onClick={() => handleCta(CONFIG.ctaPrimary, "hero_cta", "hero")}
                 aria-label={CONFIG.ctaPrimary}
               >
                 <span className="btn-spark" aria-hidden="true">
@@ -344,7 +328,11 @@ export default function LandingPageClient({
                   className={`demo-tab ${i === activeDemo ? "active" : ""}`}
                   onClick={() => {
                     setActiveDemo(i);
-                    trackEvent("demo_tab_click", { demo: d.id });
+                    trackEvent("demo_tab_click", {
+                      demo: d.id,
+                      cta_module_id: "demo_tab",
+                      ...utmParamsRef.current,
+                    });
                   }}
                 >
                   {d.scenarioEmoji} {d.label}
@@ -394,7 +382,7 @@ export default function LandingPageClient({
 
             <button
               className="btn btn-primary btn-demo"
-              onClick={() => handleCta(CONFIG.ctaSecondary, "demo_cta")}
+              onClick={() => handleCta(CONFIG.ctaSecondary, "demo_cta", "demo")}
             >
               {CONFIG.ctaSecondary}
             </button>
@@ -565,7 +553,7 @@ export default function LandingPageClient({
             </p>
             <button
               className="btn btn-primary btn-footer"
-              onClick={() => handleCta(CONFIG.ctaTertiary, "footer_cta")}
+              onClick={() => handleCta(CONFIG.ctaTertiary, "footer_cta", "footer")}
             >
               {CONFIG.ctaTertiary}
             </button>
@@ -592,7 +580,7 @@ export default function LandingPageClient({
       >
         <button
           className="btn btn-primary btn-sticky"
-          onClick={() => handleCta(CONFIG.ctaPrimary, "sticky_cta")}
+          onClick={() => handleCta(CONFIG.ctaPrimary, "sticky_cta", "sticky")}
         >
           <span className="sticky-spark">⚡</span>
           {CONFIG.ctaPrimary}
