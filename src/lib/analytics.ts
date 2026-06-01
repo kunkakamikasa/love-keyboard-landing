@@ -12,7 +12,12 @@ export type EventName =
   | "cta_click"
   | "hero_cta_click"
   | "product_entry_click"
-  | "demo_tab_click";
+  | "demo_tab_click"
+  | "cta_interest_click"
+  | "waitlist_open"
+  | "waitlist_submit"
+  | "waitlist_success"
+  | "waitlist_error";
 
 export type AttributionContext = {
   // utm passthrough

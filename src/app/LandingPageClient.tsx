@@ -4,25 +4,33 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   trackEvent,
   readUtmFromLocation,
-  buildCtaUrl,
   STRATEGY_ID,
   LANDING_VARIANT_ID,
   type AttributionContext,
 } from "@/lib/analytics";
+import {
+  MvpCtaFallback,
+  type MvpCtaHandle,
+  type MvpCtaSourceSlot,
+} from "@/components/MvpCtaFallback";
 
 // ─── Config (swap these without touching page structure) ───────────────────
-// NOTE: visual_manifest_pending — App Store / product URL not yet confirmed
-// by upstream. Replace ctaUrl with the real App Store / waitlist link once
-// nf-publish-ops or the product owner provides it.
+// MVP fallback mode (NFDES-20260601-001): ctaUrl is intentionally not used —
+// every CTA opens the unified mvp_waitlist sheet through MvpCtaFallback.
+// When the real product link is available, switch CONFIG.ctaMode to "external"
+// and reintroduce buildCtaUrl + window.open in handleCta.
 const CONFIG = {
+  ctaMode: "mvp_waitlist" as "mvp_waitlist" | "external",
   ctaUrl: "#",
   appName: "Love Keyboard",
   tagline: "AI reply coach for dating texts",
   subTagline:
     "Paste a chat screenshot, get 3 natural replies that actually sound like you.",
-  ctaPrimary: "Get Reply Ideas",
-  ctaSecondary: "Try the Reply Generator",
-  ctaTertiary: "Sound Like You — Smoother",
+  // CTA labels follow the MVP CTA fallback standard (NFDES-20260601-001):
+  // never imply an immediate working product; promise access/notification only.
+  ctaPrimary: "Join early access",
+  ctaSecondary: "Get notified when it launches",
+  ctaTertiary: "Be first to try it",
   // UTM defaults (overridden by URL params at runtime)
   utmSource: "organic",
   utmMedium: "social",
@@ -141,6 +149,7 @@ export default function LandingPageClient({
   const [heroVisible, setHeroVisible] = useState(true);
   void initialQuery;
   const heroRef = useRef<HTMLDivElement>(null);
+  const mvpCtaRef = useRef<MvpCtaHandle>(null);
   const sectionRefs = useRef<Map<string, IntersectionObserver>>(new Map());
 
   useEffect(() => {
@@ -206,26 +215,29 @@ export default function LandingPageClient({
       ...utmParamsRef.current,
       utm_content: ctaModuleId,
       cta_module_id: ctaModuleId,
-    };
-    const url = buildCtaUrl(CONFIG.ctaUrl, {
-      ...utm,
       strategy_id: STRATEGY_ID,
       landing_variant_id: LANDING_VARIANT_ID,
-    });
+    };
     const eventName = ctaModuleId === "hero_cta" ? "hero_cta_click" : "cta_click";
-    trackEvent(eventName, {
-      label,
-      placement,
-      ...utm,
-    });
-    trackEvent("product_entry_click", {
-      label,
-      placement,
-      ...utm,
-    });
-    if (url !== "#") {
-      window.open(url, "_blank", "noopener");
+    trackEvent(eventName, { label, placement, ...utm });
+    trackEvent("product_entry_click", { label, placement, ...utm });
+
+    if (CONFIG.ctaMode === "mvp_waitlist") {
+      const slot: MvpCtaSourceSlot =
+        placement === "hero"
+          ? "hero"
+          : placement === "sticky"
+          ? "sticky"
+          : placement === "footer"
+          ? "footer"
+          : placement === "demo"
+          ? "demo"
+          : "secondary";
+      mvpCtaRef.current?.trigger(slot, label);
+      return;
     }
+
+    // Future: external mode (real App Store / product URL) goes here.
   }
 
   const demo = DEMOS[activeDemo];
@@ -586,6 +598,14 @@ export default function LandingPageClient({
           {CONFIG.ctaPrimary}
         </button>
       </div>
+
+      {/* ── MVP CTA Fallback overlay (NFDES-20260601-001) ─────────────── */}
+      <MvpCtaFallback
+        ref={mvpCtaRef}
+        variantId={LANDING_VARIANT_ID}
+        strategyId={STRATEGY_ID}
+        getAttribution={() => utmParamsRef.current}
+      />
     </>
   );
 }
