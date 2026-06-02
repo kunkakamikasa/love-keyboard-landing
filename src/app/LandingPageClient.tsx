@@ -251,8 +251,7 @@ export default function LandingPageClient({
             <div className="hero-copy">
               <div className="hero-badge">💌 Love Keyboard</div>
               <h1 className="hero-headline">
-                Stuck on{" "}
-                <span className="gradient-text">what to text back?</span>
+                Show, <span className="gradient-text">Don&apos;t Tell.</span>
               </h1>
               <p className="hero-sub">
                 Paste a chat screenshot. Get 3 natural replies — playful, warm,

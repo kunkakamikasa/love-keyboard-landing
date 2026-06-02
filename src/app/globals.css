@@ -83,6 +83,9 @@ body {
   color: var(--text-muted);
   margin-top: 8px;
   text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 /* ── Sticky CTA ───────────────────────────────────────────────────────── */
@@ -151,6 +154,8 @@ body {
   flex-direction: column;
   gap: 24px;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-badge {
@@ -181,6 +186,9 @@ body {
   letter-spacing: -0.04em;
   line-height: 1.15;
   margin-bottom: 16px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .hero-proof {
@@ -861,6 +869,8 @@ main { overflow-x: hidden; }
   margin-bottom: 16px;
   max-width: 360px;
   text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .btn-spark { font-size: 1.05em; }
 .sticky-spark { font-size: 1.05em; }
