@@ -1171,3 +1171,67 @@ main { overflow-x: hidden; }
   text-align: center;
   letter-spacing: 0.01em;
 }
+
+/* ── Approved Hero Visual (manifest v1) ───────────────────────────────── */
+.hero-visual {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.hero-visual picture,
+.hero-visual picture img,
+.hero-visual-img {
+  width: 100%;
+  height: auto;
+  max-width: 360px;
+  display: block;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: var(--bg2);
+}
+
+@media (min-width: 768px) {
+  .hero-visual-img,
+  .hero-visual picture img {
+    max-width: 720px;
+    border-radius: 28px;
+  }
+}
+
+/* ── Tone Cards Section (approved manifest asset) ─────────────────────── */
+.tone-cards-section {
+  padding: 56px 0 48px;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 107, 168, 0.12) 0%, transparent 70%),
+    var(--bg);
+}
+
+.tone-cards-visual {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.tone-cards-img {
+  width: 100%;
+  height: auto;
+  max-width: 480px;
+  display: block;
+  border-radius: 24px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: var(--bg2);
+}
+
+@media (min-width: 768px) {
+  .tone-cards-img {
+    max-width: 640px;
+    border-radius: 28px;
+  }
+}
