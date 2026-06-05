@@ -251,8 +251,7 @@ export default function LandingPageClient({
             <div className="hero-copy">
               <div className="hero-badge">💌 Love Keyboard</div>
               <h1 className="hero-headline">
-                Stuck on{" "}
-                <span className="gradient-text">what to text back?</span>
+                Show, <span className="gradient-text">Don&apos;t Tell.</span>
               </h1>
               <p className="hero-sub">
                 Paste a chat screenshot. Get 3 natural replies — playful, warm,
@@ -287,38 +286,23 @@ export default function LandingPageClient({
               </p>
             </div>
 
-            {/* Phone mockup: chat screenshot → 3 reply cards */}
-            <div className="hero-mockup" aria-hidden="true">
-              <div className="phone-frame">
-                <div className="phone-screen">
-                  <div className="chat-stack">
-                    <div className="chat-context">
-                      <span className="chat-context-emoji">💬</span>
-                      <span>Dating app · she just sent</span>
-                    </div>
-                    <div className="bubble bubble-in">lol</div>
-                    <div className="bubble bubble-out bubble-typing">
-                      <span className="dot" />
-                      <span className="dot" />
-                      <span className="dot" />
-                    </div>
-                  </div>
-                  <div className="reply-stack">
-                    <div className="reply-stack-label">3 reply ideas</div>
-                    {DEMOS[0].replies.map((r) => (
-                      <div className="reply-card" key={r.tone}>
-                        <span
-                          className="reply-tone"
-                          style={{ color: r.toneColor }}
-                        >
-                          {TONE_LABEL[r.tone]}
-                        </span>
-                        <div className="reply-text">{r.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {/* Approved hero visual: mobile 9:16 / desktop 16:9 (manifest v1) */}
+            <div className="hero-visual" aria-hidden="true">
+              <picture>
+                <source
+                  media="(min-width: 768px)"
+                  srcSet="/landing/hero_desktop_v1.png"
+                />
+                <img
+                  src="/landing/hero_mobile_v1.png"
+                  alt=""
+                  className="hero-visual-img"
+                  width={864}
+                  height={1536}
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
             </div>
           </div>
         </section>
@@ -398,6 +382,30 @@ export default function LandingPageClient({
             >
               {CONFIG.ctaSecondary}
             </button>
+          </div>
+        </section>
+
+        {/* ── Tone Cards Visual (approved manifest asset, square) ──────── */}
+        <section className="tone-cards-section" id="tone-cards">
+          <div className="section-inner">
+            <h2 className="section-title">Three Tones, One Message</h2>
+            <p className="section-sub">
+              One incoming message becomes three reply cards — playful, warm,
+              confident.
+            </p>
+            <div className="tone-cards-visual">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/landing/tone_cards_v1.png"
+                alt=""
+                className="tone-cards-img"
+                width={1024}
+                height={1024}
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+            </div>
           </div>
         </section>
 
